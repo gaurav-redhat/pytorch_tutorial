@@ -1,442 +1,715 @@
-"""Generate high-quality tutorial images for PyTorch Zero to Advanced."""
+"""Generate block diagram style images for PyTorch tutorials."""
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from matplotlib.patches import FancyBboxPatch, Arrow
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Circle
 import numpy as np
 import os
 
-# Set high DPI and better font
-plt.rcParams['figure.dpi'] = 150
+plt.rcParams['figure.dpi'] = 200
 plt.rcParams['savefig.dpi'] = 200
 plt.rcParams['font.family'] = 'DejaVu Sans'
-plt.rcParams['font.size'] = 10
 
-def create_tutorial_image(title, subtitle, sections, filename, accent_color='#EE4C2C'):
-    """Create a clean, professional tutorial overview image."""
+def draw_block(ax, x, y, w, h, text, code=None, color='#3b82f6', text_color='white'):
+    """Draw a single block with text."""
+    block = FancyBboxPatch((x - w/2, y - h/2), w, h,
+                            boxstyle="round,pad=0.02,rounding_size=0.1",
+                            facecolor=color, edgecolor='white', linewidth=1.5)
+    ax.add_patch(block)
     
+    if code:
+        ax.text(x, y + 0.15, text, fontsize=9, fontweight='bold',
+                color=text_color, ha='center', va='center')
+        ax.text(x, y - 0.15, code, fontsize=7, fontfamily='monospace',
+                color='#fef08a', ha='center', va='center')
+    else:
+        ax.text(x, y, text, fontsize=9, fontweight='bold',
+                color=text_color, ha='center', va='center')
+
+def draw_arrow(ax, x1, y1, x2, y2, color='#64748b'):
+    """Draw an arrow between two points."""
+    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle='->', color=color, lw=2))
+
+def draw_arrow_curved(ax, x1, y1, x2, y2, color='#64748b', curve='arc3,rad=0.2'):
+    """Draw a curved arrow."""
+    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle='->', color=color, lw=2,
+                               connectionstyle=curve))
+
+# ============ TUTORIAL 1: BASICS ============
+def create_basics_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    # Title
+    ax.text(6, 5.5, 'PyTorch Basics - Setup Flow', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Flow: Install -> Import -> GPU Check -> Create Tensor -> Use
+    blocks = [
+        (1.5, 3.5, 'Install', 'pip install torch', '#22c55e'),
+        (4, 3.5, 'Import', 'import torch', '#3b82f6'),
+        (6.5, 3.5, 'GPU Check', 'cuda.is_available()', '#f59e0b'),
+        (9, 3.5, 'Create Tensor', 'torch.tensor([...])', '#ec4899'),
+    ]
+    
+    for x, y, text, code, color in blocks:
+        draw_block(ax, x, y, 2.2, 1, text, code, color)
+    
+    # Arrows
+    for i in range(len(blocks) - 1):
+        draw_arrow(ax, blocks[i][0] + 1.1, blocks[i][1], 
+                   blocks[i+1][0] - 1.1, blocks[i+1][1], '#94a3b8')
+    
+    # Bottom: Device selection
+    ax.text(6.5, 2, 'Device Selection', fontsize=11, fontweight='bold', color='#94a3b8', ha='center')
+    
+    draw_block(ax, 4, 1, 2, 0.8, 'CPU', 'device("cpu")', '#64748b')
+    draw_block(ax, 9, 1, 2, 0.8, 'GPU', 'device("cuda")', '#22c55e')
+    
+    draw_arrow(ax, 6.5, 3, 4, 1.4, '#94a3b8')
+    draw_arrow(ax, 6.5, 3, 9, 1.4, '#94a3b8')
+    
+    ax.text(5.5, 1.8, 'False', fontsize=8, color='#94a3b8')
+    ax.text(7.5, 1.8, 'True', fontsize=8, color='#22c55e')
+    
+    plt.savefig('01_basics/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 01_basics/overview.png")
+
+# ============ TUTORIAL 2: TENSORS ============
+def create_tensors_diagram():
     fig, ax = plt.subplots(figsize=(12, 7))
     ax.set_xlim(0, 12)
     ax.set_ylim(0, 7)
     ax.axis('off')
-    ax.set_facecolor('#0d1117')
-    fig.patch.set_facecolor('#0d1117')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
     
-    # Main background
-    main_bg = FancyBboxPatch((0.2, 0.2), 11.6, 6.6,
-                              boxstyle="round,pad=0.02,rounding_size=0.3",
-                              facecolor='#161b22', edgecolor=accent_color,
-                              linewidth=2)
-    ax.add_patch(main_bg)
+    ax.text(6, 6.5, 'Tensor Operations Flow', fontsize=16, fontweight='bold',
+            color='white', ha='center')
     
-    # Title bar
-    title_bar = FancyBboxPatch((0.4, 5.8), 11.2, 0.9,
-                                boxstyle="round,pad=0.02,rounding_size=0.2",
-                                facecolor=accent_color, edgecolor='none')
-    ax.add_patch(title_bar)
+    # Creation methods (left)
+    ax.text(1.5, 5.5, 'CREATE', fontsize=10, fontweight='bold', color='#22c55e', ha='center')
+    creates = [('zeros()', 5), ('ones()', 4.5), ('randn()', 4), ('arange()', 3.5), ('eye()', 3)]
+    for name, y in creates:
+        draw_block(ax, 1.5, y, 1.6, 0.4, name, color='#166534')
     
-    # Title text
-    ax.text(6, 6.25, title, fontsize=18, fontweight='bold',
-            color='white', ha='center', va='center')
+    # Central tensor
+    draw_block(ax, 4.5, 4, 2, 1.2, 'TENSOR', '[B, C, H, W]', '#3b82f6')
     
-    # Subtitle
-    ax.text(6, 5.5, subtitle, fontsize=11, color='#8b949e',
+    # Arrows to tensor
+    for _, y in creates:
+        draw_arrow(ax, 2.3, y, 3.5, 4, '#22c55e')
+    
+    # Operations (right side)
+    ax.text(7.5, 5.8, 'OPERATIONS', fontsize=10, fontweight='bold', color='#f59e0b', ha='center')
+    
+    # Math ops
+    draw_block(ax, 7, 5, 1.4, 0.5, 'Math', '+, -, *, /', '#b45309')
+    draw_block(ax, 8.5, 5, 1.4, 0.5, 'Reduce', 'sum, mean', '#b45309')
+    draw_block(ax, 10, 5, 1.4, 0.5, 'Compare', '>, <, ==', '#b45309')
+    
+    # Linear algebra
+    ax.text(8.5, 4.2, 'LINEAR ALGEBRA', fontsize=9, fontweight='bold', color='#ec4899', ha='center')
+    draw_block(ax, 7, 3.5, 1.4, 0.5, 'MatMul', 'A @ B', '#9d174d')
+    draw_block(ax, 8.5, 3.5, 1.4, 0.5, 'Inverse', 'linalg.inv', '#9d174d')
+    draw_block(ax, 10, 3.5, 1.4, 0.5, 'SVD', 'linalg.svd', '#9d174d')
+    
+    # Reshape
+    ax.text(8.5, 2.6, 'RESHAPE', fontsize=9, fontweight='bold', color='#8b5cf6', ha='center')
+    draw_block(ax, 7, 2, 1.4, 0.5, 'view()', 'reshape', '#6d28d9')
+    draw_block(ax, 8.5, 2, 1.4, 0.5, 'squeeze()', 'remove 1s', '#6d28d9')
+    draw_block(ax, 10, 2, 1.4, 0.5, 'cat()', 'concat', '#6d28d9')
+    
+    # Arrows from tensor
+    draw_arrow(ax, 5.5, 4.3, 6.3, 5, '#94a3b8')
+    draw_arrow(ax, 5.5, 4, 6.3, 3.5, '#94a3b8')
+    draw_arrow(ax, 5.5, 3.7, 6.3, 2, '#94a3b8')
+    
+    # NumPy bridge (bottom)
+    ax.text(4.5, 1.5, 'NumPy Bridge', fontsize=10, fontweight='bold', color='#06b6d4', ha='center')
+    draw_block(ax, 2.5, 0.8, 2, 0.6, 'NumPy Array', 'np.array()', '#0891b2')
+    draw_block(ax, 6.5, 0.8, 2, 0.6, 'PyTorch Tensor', 'torch.tensor()', '#3b82f6')
+    
+    draw_arrow(ax, 3.5, 1, 5.5, 1, '#06b6d4')
+    draw_arrow(ax, 5.5, 0.6, 3.5, 0.6, '#06b6d4')
+    ax.text(4.5, 1.15, 'from_numpy()', fontsize=7, color='#06b6d4', ha='center')
+    ax.text(4.5, 0.45, '.numpy()', fontsize=7, color='#06b6d4', ha='center')
+    
+    plt.savefig('02_tensors/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 02_tensors/overview.png")
+
+# ============ TUTORIAL 3: AUTOGRAD ============
+def create_autograd_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Autograd - Computational Graph', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Forward pass (top)
+    ax.text(6, 4.8, 'Forward Pass', fontsize=11, color='#22c55e', ha='center')
+    
+    draw_block(ax, 2, 4, 1.8, 0.8, 'x', 'requires_grad=True', '#22c55e')
+    draw_block(ax, 4.5, 4, 1.5, 0.8, 'W*x', 'Linear', '#3b82f6')
+    draw_block(ax, 7, 4, 1.5, 0.8, 'ReLU', 'Activation', '#f59e0b')
+    draw_block(ax, 9.5, 4, 1.5, 0.8, 'Loss', 'MSE/CE', '#ef4444')
+    
+    draw_arrow(ax, 2.9, 4, 3.75, 4, '#22c55e')
+    draw_arrow(ax, 5.25, 4, 6.25, 4, '#22c55e')
+    draw_arrow(ax, 7.75, 4, 8.75, 4, '#22c55e')
+    
+    # Backward pass (bottom)
+    ax.text(6, 2.2, 'Backward Pass: loss.backward()', fontsize=11, color='#ec4899', ha='center')
+    
+    draw_block(ax, 9.5, 1.5, 1.5, 0.8, 'dL/dL', '= 1', '#ec4899')
+    draw_block(ax, 7, 1.5, 1.5, 0.8, 'dL/da', 'grad_fn', '#ec4899')
+    draw_block(ax, 4.5, 1.5, 1.5, 0.8, 'dL/dz', 'grad_fn', '#ec4899')
+    draw_block(ax, 2, 1.5, 1.8, 0.8, 'x.grad', 'dL/dx', '#ec4899')
+    
+    draw_arrow(ax, 8.75, 1.5, 7.75, 1.5, '#ec4899')
+    draw_arrow(ax, 6.25, 1.5, 5.25, 1.5, '#ec4899')
+    draw_arrow(ax, 3.75, 1.5, 2.9, 1.5, '#ec4899')
+    
+    # Chain rule annotation
+    ax.text(6, 0.5, 'Chain Rule: dL/dx = dL/da * da/dz * dz/dx', fontsize=10, 
+            color='#94a3b8', ha='center', style='italic')
+    
+    plt.savefig('03_autograd/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 03_autograd/overview.png")
+
+# ============ TUTORIAL 4: NEURAL NETWORKS ============
+def create_nn_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Neural Network Architecture', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Input layer
+    for i, y in enumerate([4, 3.2, 2.4]):
+        circle = Circle((1.5, y), 0.25, facecolor='#22c55e', edgecolor='white', linewidth=1.5)
+        ax.add_patch(circle)
+    ax.text(1.5, 1.5, 'Input', fontsize=9, color='#22c55e', ha='center')
+    
+    # Hidden layer 1
+    draw_block(ax, 4, 3.2, 1.8, 2, 'Linear\n+\nReLU', color='#3b82f6')
+    ax.text(4, 1.5, 'Hidden 1', fontsize=9, color='#3b82f6', ha='center')
+    
+    # Hidden layer 2
+    draw_block(ax, 6.5, 3.2, 1.8, 2, 'Linear\n+\nReLU', color='#8b5cf6')
+    ax.text(6.5, 1.5, 'Hidden 2', fontsize=9, color='#8b5cf6', ha='center')
+    
+    # Output layer
+    draw_block(ax, 9, 3.2, 1.8, 1.5, 'Linear\n+\nSoftmax', color='#ec4899')
+    ax.text(9, 1.5, 'Output', fontsize=9, color='#ec4899', ha='center')
+    
+    # Output nodes
+    for i, y in enumerate([4, 3.2, 2.4]):
+        circle = Circle((10.8, y), 0.25, facecolor='#ef4444', edgecolor='white', linewidth=1.5)
+        ax.add_patch(circle)
+    ax.text(10.8, 1.5, 'Classes', fontsize=9, color='#ef4444', ha='center')
+    
+    # Arrows
+    for y in [4, 3.2, 2.4]:
+        draw_arrow(ax, 1.75, y, 3.1, 3.2, '#64748b')
+    draw_arrow(ax, 4.9, 3.2, 5.6, 3.2, '#64748b')
+    draw_arrow(ax, 7.4, 3.2, 8.1, 3.2, '#64748b')
+    for y in [4, 3.2, 2.4]:
+        draw_arrow(ax, 9.9, 3.2, 10.55, y, '#64748b')
+    
+    # Code annotation
+    ax.text(6, 0.6, 'class Net(nn.Module):  def forward(self, x): return self.layers(x)', 
+            fontsize=8, fontfamily='monospace', color='#94a3b8', ha='center')
+    
+    plt.savefig('04_neural_networks/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 04_neural_networks/overview.png")
+
+# ============ TUTORIAL 5: DATA LOADING ============
+def create_data_loading_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Data Loading Pipeline', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Raw data
+    draw_block(ax, 1.5, 3.5, 2, 1.5, 'Raw Data', 'Images/CSV', '#64748b')
+    
+    # Dataset
+    draw_block(ax, 4.5, 3.5, 2.2, 1.5, 'Dataset', '__getitem__(i)', '#22c55e')
+    ax.text(4.5, 2.5, '__len__, transform', fontsize=7, color='#22c55e', ha='center')
+    
+    # Transform
+    draw_block(ax, 7.5, 4.5, 2, 0.8, 'Transform', 'ToTensor()', '#f59e0b')
+    draw_block(ax, 7.5, 3.5, 2, 0.8, 'Transform', 'Normalize()', '#f59e0b')
+    draw_block(ax, 7.5, 2.5, 2, 0.8, 'Transform', 'Augment()', '#f59e0b')
+    
+    # DataLoader
+    draw_block(ax, 10.5, 3.5, 2, 1.5, 'DataLoader', 'Batches', '#3b82f6')
+    ax.text(10.5, 2.5, 'batch_size=32', fontsize=7, color='#3b82f6', ha='center')
+    
+    # Arrows
+    draw_arrow(ax, 2.5, 3.5, 3.4, 3.5, '#94a3b8')
+    draw_arrow(ax, 5.6, 3.5, 6.5, 3.5, '#94a3b8')
+    draw_arrow(ax, 8.5, 3.5, 9.5, 3.5, '#94a3b8')
+    
+    # Bottom: batch output
+    ax.text(6, 1.2, 'Output: for batch_x, batch_y in dataloader:', fontsize=9, 
+            fontfamily='monospace', color='#94a3b8', ha='center')
+    
+    # Batch visualization
+    for i in range(4):
+        rect = FancyBboxPatch((3.5 + i*1.5, 0.3), 1.2, 0.6,
+                               boxstyle="round,pad=0.02", facecolor='#1e293b',
+                               edgecolor='#3b82f6', linewidth=1)
+        ax.add_patch(rect)
+        ax.text(4.1 + i*1.5, 0.6, f'Batch {i+1}', fontsize=7, color='white', ha='center')
+    
+    plt.savefig('05_data_loading/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 05_data_loading/overview.png")
+
+# ============ TUTORIAL 6: TRAINING LOOP ============
+def create_training_loop_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Training Loop', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Circular flow
+    steps = [
+        (3, 4, 'Data\nBatch', 'x, y = batch', '#64748b'),
+        (6, 4.5, 'Forward', 'pred = model(x)', '#22c55e'),
+        (9, 4, 'Loss', 'loss = criterion()', '#ef4444'),
+        (9, 2, 'Backward', 'loss.backward()', '#ec4899'),
+        (6, 1.5, 'Update', 'optimizer.step()', '#3b82f6'),
+        (3, 2, 'Zero Grad', 'optimizer.zero_grad()', '#f59e0b'),
+    ]
+    
+    for x, y, text, code, color in steps:
+        draw_block(ax, x, y, 2.2, 1, text, code, color)
+    
+    # Circular arrows
+    draw_arrow(ax, 4.1, 4, 4.9, 4.3, '#94a3b8')
+    draw_arrow(ax, 7.1, 4.5, 7.9, 4.2, '#94a3b8')
+    draw_arrow(ax, 9, 3.5, 9, 2.5, '#94a3b8')
+    draw_arrow(ax, 7.9, 1.7, 7.1, 1.5, '#94a3b8')
+    draw_arrow(ax, 4.9, 1.5, 4.1, 1.8, '#94a3b8')
+    draw_arrow(ax, 3, 2.5, 3, 3.5, '#94a3b8')
+    
+    # Center text
+    ax.text(6, 3, 'Repeat for\neach epoch', fontsize=10, color='#94a3b8', 
             ha='center', va='center', style='italic')
     
-    # Calculate layout
-    n_sections = len(sections)
-    section_width = 11 / n_sections
-    
-    for i, section in enumerate(sections):
-        x_center = 0.6 + i * section_width + section_width / 2
-        
-        # Section header box
-        header_box = FancyBboxPatch((x_center - section_width/2 + 0.1, 4.6), 
-                                     section_width - 0.2, 0.6,
-                                     boxstyle="round,pad=0.02,rounding_size=0.1",
-                                     facecolor='#21262d', edgecolor=accent_color,
-                                     linewidth=1.5)
-        ax.add_patch(header_box)
-        
-        # Section name
-        ax.text(x_center, 4.9, section['name'], fontsize=11, fontweight='bold',
-                color=accent_color, ha='center', va='center')
-        
-        # Items
-        items = section.get('items', [])
-        item_height = 4 / max(len(items), 1)
-        
-        for j, item in enumerate(items):
-            y = 4.3 - j * item_height - item_height / 2
-            
-            # Item background
-            item_bg = FancyBboxPatch((x_center - section_width/2 + 0.15, y - item_height/2 + 0.1),
-                                      section_width - 0.3, item_height - 0.15,
-                                      boxstyle="round,pad=0.01,rounding_size=0.08",
-                                      facecolor='#0d1117', edgecolor='#30363d',
-                                      linewidth=1)
-            ax.add_patch(item_bg)
-            
-            # Item name (top)
-            ax.text(x_center, y + item_height/4, item.get('name', ''),
-                    fontsize=9, fontweight='bold', color='#e6edf3',
-                    ha='center', va='center')
-            
-            # Item code (middle)
-            if 'code' in item:
-                ax.text(x_center, y, item['code'],
-                        fontsize=8, fontfamily='monospace', color='#7ee787',
-                        ha='center', va='center')
-            
-            # Item description (bottom)
-            if 'desc' in item:
-                ax.text(x_center, y - item_height/4, item['desc'],
-                        fontsize=7, color='#8b949e',
-                        ha='center', va='center')
-    
-    plt.tight_layout(pad=0.5)
-    plt.savefig(filename, bbox_inches='tight', facecolor='#0d1117', edgecolor='none')
+    plt.savefig('06_training_loop/overview.png', bbox_inches='tight', facecolor='#0f172a')
     plt.close()
-    print(f"Created: {filename}")
+    print("Created: 06_training_loop/overview.png")
 
+# ============ TUTORIAL 7: CNN ============
+def create_cnn_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'CNN Architecture', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Input image
+    rect = FancyBboxPatch((0.3, 2), 1.5, 2, boxstyle="round,pad=0.02",
+                           facecolor='#22c55e', edgecolor='white', linewidth=1.5)
+    ax.add_patch(rect)
+    ax.text(1.05, 3, 'Image\n[3,224,224]', fontsize=8, color='white', ha='center', va='center')
+    
+    # Conv blocks
+    conv_blocks = [
+        (2.8, 'Conv1\n64', '#3b82f6'),
+        (4.3, 'Pool\n/2', '#8b5cf6'),
+        (5.8, 'Conv2\n128', '#3b82f6'),
+        (7.3, 'Pool\n/2', '#8b5cf6'),
+        (8.8, 'Conv3\n256', '#3b82f6'),
+    ]
+    
+    h = 2
+    for x, text, color in conv_blocks:
+        rect = FancyBboxPatch((x, 3 - h/2), 1.2, h, boxstyle="round,pad=0.02",
+                               facecolor=color, edgecolor='white', linewidth=1.5)
+        ax.add_patch(rect)
+        ax.text(x + 0.6, 3, text, fontsize=8, color='white', ha='center', va='center')
+        h = max(h * 0.85, 1)
+    
+    # Flatten + FC
+    draw_block(ax, 10.5, 3.5, 1.2, 0.8, 'Flatten', color='#f59e0b')
+    draw_block(ax, 10.5, 2.5, 1.2, 0.8, 'FC 512', color='#ec4899')
+    draw_block(ax, 10.5, 1.5, 1.2, 0.8, 'FC 10', color='#ef4444')
+    
+    # Arrows
+    positions = [1.8, 4, 5.5, 7, 8.5, 10]
+    for i in range(len(positions) - 1):
+        draw_arrow(ax, positions[i], 3, positions[i] + 0.7, 3, '#94a3b8')
+    
+    draw_arrow(ax, 10.5, 3.1, 10.5, 2.9, '#94a3b8')
+    draw_arrow(ax, 10.5, 2.1, 10.5, 1.9, '#94a3b8')
+    
+    # Labels
+    ax.text(3.4, 4.7, 'Feature Extraction', fontsize=10, color='#3b82f6', ha='center')
+    ax.text(10.5, 4.7, 'Classification', fontsize=10, color='#ec4899', ha='center')
+    
+    plt.savefig('07_cnn/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 07_cnn/overview.png")
 
-# Define all tutorials
-tutorials = {
-    '01_basics': {
-        'title': 'PyTorch Basics',
-        'subtitle': 'Installation, First Tensor, GPU Setup',
-        'color': '#4CAF50',
-        'sections': [
-            {'name': 'Install', 'items': [
-                {'name': 'pip install', 'code': 'pip install torch', 'desc': 'CPU version'},
-                {'name': 'with CUDA', 'code': 'torch+cu118', 'desc': 'GPU version'},
-            ]},
-            {'name': 'Import', 'items': [
-                {'name': 'PyTorch', 'code': 'import torch', 'desc': 'Main module'},
-                {'name': 'Version', 'code': 'torch.__version__', 'desc': 'Check install'},
-            ]},
-            {'name': 'GPU Check', 'items': [
-                {'name': 'Available?', 'code': 'cuda.is_available()', 'desc': 'True/False'},
-                {'name': 'Device', 'code': "device('cuda')", 'desc': 'Select GPU'},
-            ]},
-            {'name': 'First Tensor', 'items': [
-                {'name': 'Create', 'code': 'tensor([1,2,3])', 'desc': 'From list'},
-                {'name': 'Properties', 'code': '.shape .dtype', 'desc': 'Inspect'},
-            ]},
-        ]
-    },
-    '02_tensors': {
-        'title': 'Tensors - Complete Guide',
-        'subtitle': 'Creation, NumPy, Operations, Linear Algebra',
-        'color': '#4CAF50',
-        'sections': [
-            {'name': 'Creation', 'items': [
-                {'name': 'Zeros/Ones', 'code': 'zeros(3,4)', 'desc': 'Fill values'},
-                {'name': 'Random', 'code': 'randn(3,3)', 'desc': 'Normal dist'},
-                {'name': 'Range', 'code': 'arange(0,10)', 'desc': 'Sequence'},
-                {'name': 'Identity', 'code': 'eye(3)', 'desc': 'I matrix'},
-            ]},
-            {'name': 'NumPy', 'items': [
-                {'name': 'To NumPy', 'code': '.numpy()', 'desc': 'Share memory'},
-                {'name': 'From NumPy', 'code': 'from_numpy()', 'desc': 'Share memory'},
-                {'name': 'Copy', 'code': 'tensor(arr)', 'desc': 'New memory'},
-            ]},
-            {'name': 'Linear Algebra', 'items': [
-                {'name': 'MatMul', 'code': 'A @ B', 'desc': 'Matrix multiply'},
-                {'name': 'Inverse', 'code': 'linalg.inv()', 'desc': 'A^-1'},
-                {'name': 'SVD', 'code': 'linalg.svd()', 'desc': 'Decompose'},
-                {'name': 'Solve', 'code': 'linalg.solve()', 'desc': 'Ax = b'},
-            ]},
-            {'name': 'Reshape', 'items': [
-                {'name': 'View', 'code': '.view(2,3)', 'desc': 'New shape'},
-                {'name': 'Squeeze', 'code': '.squeeze()', 'desc': 'Remove 1s'},
-                {'name': 'Cat', 'code': 'cat([a,b])', 'desc': 'Concatenate'},
-                {'name': 'Stack', 'code': 'stack([a,b])', 'desc': 'New dim'},
-            ]},
-        ]
-    },
-    '03_autograd': {
-        'title': 'Autograd',
-        'subtitle': 'Automatic Differentiation Engine',
-        'color': '#4CAF50',
-        'sections': [
-            {'name': 'Enable Gradients', 'items': [
-                {'name': 'Track', 'code': 'requires_grad=True', 'desc': 'Enable'},
-                {'name': 'Compute', 'code': 'loss.backward()', 'desc': 'Backprop'},
-                {'name': 'Access', 'code': 'x.grad', 'desc': 'Get gradient'},
-            ]},
-            {'name': 'Graph', 'items': [
-                {'name': 'Leaf', 'code': 'x (input)', 'desc': 'Start'},
-                {'name': 'Operation', 'code': 'y = f(x)', 'desc': 'Transform'},
-                {'name': 'grad_fn', 'code': '.grad_fn', 'desc': 'History'},
-            ]},
-            {'name': 'Control', 'items': [
-                {'name': 'Disable', 'code': 'with no_grad():', 'desc': 'Inference'},
-                {'name': 'Detach', 'code': '.detach()', 'desc': 'Remove'},
-                {'name': 'Zero', 'code': '.zero_()', 'desc': 'Reset'},
-            ]},
-        ]
-    },
-    '04_neural_networks': {
-        'title': 'Neural Networks',
-        'subtitle': 'nn.Module, Layers, Activations',
-        'color': '#4CAF50',
-        'sections': [
-            {'name': 'Layers', 'items': [
-                {'name': 'Linear', 'code': 'nn.Linear(in,out)', 'desc': 'Dense'},
-                {'name': 'Conv2d', 'code': 'nn.Conv2d(c,c,k)', 'desc': 'Convolution'},
-                {'name': 'BatchNorm', 'code': 'nn.BatchNorm2d', 'desc': 'Normalize'},
-                {'name': 'Dropout', 'code': 'nn.Dropout(0.5)', 'desc': 'Regularize'},
-            ]},
-            {'name': 'Activations', 'items': [
-                {'name': 'ReLU', 'code': 'nn.ReLU()', 'desc': 'max(0,x)'},
-                {'name': 'Sigmoid', 'code': 'nn.Sigmoid()', 'desc': '[0,1]'},
-                {'name': 'Softmax', 'code': 'nn.Softmax()', 'desc': 'Probs'},
-            ]},
-            {'name': 'Model', 'items': [
-                {'name': 'Class', 'code': 'class Net(Module)', 'desc': 'Define'},
-                {'name': 'Forward', 'code': 'def forward():', 'desc': 'Compute'},
-                {'name': 'Params', 'code': '.parameters()', 'desc': 'Weights'},
-            ]},
-        ]
-    },
-    '05_data_loading': {
-        'title': 'Data Loading',
-        'subtitle': 'Dataset, DataLoader, Transforms',
-        'color': '#FF9800',
-        'sections': [
-            {'name': 'Dataset', 'items': [
-                {'name': 'Length', 'code': '__len__()', 'desc': 'Size'},
-                {'name': 'Get Item', 'code': '__getitem__()', 'desc': 'Sample'},
-                {'name': 'Transform', 'code': 'transform(x)', 'desc': 'Process'},
-            ]},
-            {'name': 'DataLoader', 'items': [
-                {'name': 'Batch', 'code': 'batch_size=32', 'desc': 'Group'},
-                {'name': 'Shuffle', 'code': 'shuffle=True', 'desc': 'Random'},
-                {'name': 'Workers', 'code': 'num_workers=4', 'desc': 'Parallel'},
-            ]},
-            {'name': 'Transforms', 'items': [
-                {'name': 'ToTensor', 'code': 'ToTensor()', 'desc': 'Convert'},
-                {'name': 'Normalize', 'code': 'Normalize(m,s)', 'desc': 'Scale'},
-                {'name': 'Compose', 'code': 'Compose([...])', 'desc': 'Chain'},
-            ]},
-        ]
-    },
-    '06_training_loop': {
-        'title': 'Training Loop',
-        'subtitle': 'Forward, Backward, Optimize',
-        'color': '#FF9800',
-        'sections': [
-            {'name': 'Forward', 'items': [
-                {'name': 'Predict', 'code': 'out = model(x)', 'desc': 'Inference'},
-                {'name': 'Loss', 'code': 'loss = criterion()', 'desc': 'Error'},
-            ]},
-            {'name': 'Backward', 'items': [
-                {'name': 'Zero', 'code': 'optimizer.zero_grad()', 'desc': 'Clear'},
-                {'name': 'Backprop', 'code': 'loss.backward()', 'desc': 'Gradients'},
-                {'name': 'Update', 'code': 'optimizer.step()', 'desc': 'Weights'},
-            ]},
-            {'name': 'Loss Functions', 'items': [
-                {'name': 'CE', 'code': 'CrossEntropyLoss()', 'desc': 'Classify'},
-                {'name': 'MSE', 'code': 'MSELoss()', 'desc': 'Regress'},
-                {'name': 'BCE', 'code': 'BCELoss()', 'desc': 'Binary'},
-            ]},
-            {'name': 'Optimizers', 'items': [
-                {'name': 'SGD', 'code': 'optim.SGD()', 'desc': 'Classic'},
-                {'name': 'Adam', 'code': 'optim.Adam()', 'desc': 'Adaptive'},
-                {'name': 'AdamW', 'code': 'optim.AdamW()', 'desc': 'W decay'},
-            ]},
-        ]
-    },
-    '07_cnn': {
-        'title': 'Convolutional Neural Networks',
-        'subtitle': 'Conv2d, Pooling, Image Classification',
-        'color': '#FF9800',
-        'sections': [
-            {'name': 'Convolution', 'items': [
-                {'name': 'Conv2d', 'code': 'Conv2d(3,64,3)', 'desc': 'in,out,kernel'},
-                {'name': 'Stride', 'code': 'stride=2', 'desc': 'Step size'},
-                {'name': 'Padding', 'code': 'padding=1', 'desc': 'Border'},
-            ]},
-            {'name': 'Pooling', 'items': [
-                {'name': 'MaxPool', 'code': 'MaxPool2d(2)', 'desc': 'Downsample'},
-                {'name': 'AvgPool', 'code': 'AvgPool2d(2)', 'desc': 'Average'},
-                {'name': 'Adaptive', 'code': 'AdaptiveAvgPool', 'desc': 'Fixed out'},
-            ]},
-            {'name': 'Architecture', 'items': [
-                {'name': 'Input', 'code': '[B,C,H,W]', 'desc': 'Image batch'},
-                {'name': 'Features', 'code': 'Conv+ReLU+Pool', 'desc': 'Extract'},
-                {'name': 'Classifier', 'code': 'Flatten+FC', 'desc': 'Predict'},
-            ]},
-        ]
-    },
-    '08_rnn_lstm': {
-        'title': 'RNNs & LSTMs',
-        'subtitle': 'Sequential Data, Time Series, NLP',
-        'color': '#FF9800',
-        'sections': [
-            {'name': 'RNN', 'items': [
-                {'name': 'Input', 'code': 'x_t', 'desc': 'Current'},
-                {'name': 'Hidden', 'code': 'h_t', 'desc': 'Memory'},
-                {'name': 'Update', 'code': 'h = tanh(Wx+Uh)', 'desc': 'Combine'},
-            ]},
-            {'name': 'LSTM', 'items': [
-                {'name': 'Forget', 'code': 'f = sigmoid()', 'desc': 'What to drop'},
-                {'name': 'Input', 'code': 'i = sigmoid()', 'desc': 'What to add'},
-                {'name': 'Cell', 'code': 'c = f*c + i*g', 'desc': 'Long memory'},
-            ]},
-            {'name': 'PyTorch', 'items': [
-                {'name': 'LSTM', 'code': 'nn.LSTM(in,h)', 'desc': 'Layer'},
-                {'name': 'GRU', 'code': 'nn.GRU(in,h)', 'desc': 'Simpler'},
-                {'name': 'BiDir', 'code': 'bidirectional', 'desc': 'Both ways'},
-            ]},
-        ]
-    },
-    '09_transformers': {
-        'title': 'Transformers',
-        'subtitle': 'Self-Attention, Multi-Head, Positional Encoding',
-        'color': '#F44336',
-        'sections': [
-            {'name': 'Attention', 'items': [
-                {'name': 'Query', 'code': 'Q = xW_q', 'desc': 'What to find'},
-                {'name': 'Key', 'code': 'K = xW_k', 'desc': 'What I have'},
-                {'name': 'Value', 'code': 'V = xW_v', 'desc': 'Content'},
-                {'name': 'Score', 'code': 'softmax(QK/d)', 'desc': 'Weight'},
-            ]},
-            {'name': 'Multi-Head', 'items': [
-                {'name': 'Heads', 'code': 'num_heads=8', 'desc': 'Parallel'},
-                {'name': 'Concat', 'code': 'cat(h1..h8)', 'desc': 'Combine'},
-                {'name': 'Project', 'code': 'output @ W_o', 'desc': 'Final'},
-            ]},
-            {'name': 'Position', 'items': [
-                {'name': 'Sinusoidal', 'code': 'sin/cos', 'desc': 'Fixed'},
-                {'name': 'Learned', 'code': 'Embedding', 'desc': 'Trainable'},
-                {'name': 'RoPE', 'code': 'Rotary', 'desc': 'Modern'},
-            ]},
-        ]
-    },
-    '10_transfer_learning': {
-        'title': 'Transfer Learning',
-        'subtitle': 'Pretrained Models, Fine-tuning',
-        'color': '#F44336',
-        'sections': [
-            {'name': 'Load', 'items': [
-                {'name': 'ResNet', 'code': 'resnet50(weights)', 'desc': 'ImageNet'},
-                {'name': 'BERT', 'code': 'from_pretrained()', 'desc': 'NLP'},
-                {'name': 'ViT', 'code': 'vit_b_16()', 'desc': 'Vision'},
-            ]},
-            {'name': 'Freeze', 'items': [
-                {'name': 'All', 'code': 'requires_grad=False', 'desc': 'Lock'},
-                {'name': 'Backbone', 'code': 'model.features', 'desc': 'Keep'},
-                {'name': 'Gradual', 'code': 'Unfreeze layers', 'desc': 'Stage'},
-            ]},
-            {'name': 'Fine-tune', 'items': [
-                {'name': 'Replace', 'code': 'model.fc = ...', 'desc': 'New head'},
-                {'name': 'Low LR', 'code': 'lr=1e-5', 'desc': 'Careful'},
-                {'name': 'Train', 'code': 'Standard loop', 'desc': 'Your data'},
-            ]},
-        ]
-    },
-    '11_gan': {
-        'title': 'GANs',
-        'subtitle': 'Generator, Discriminator, Adversarial Training',
-        'color': '#F44336',
-        'sections': [
-            {'name': 'Generator', 'items': [
-                {'name': 'Input', 'code': 'z ~ N(0,1)', 'desc': 'Noise'},
-                {'name': 'Upsample', 'code': 'ConvTranspose2d', 'desc': 'Grow'},
-                {'name': 'Output', 'code': 'Tanh()', 'desc': 'Fake image'},
-            ]},
-            {'name': 'Discriminator', 'items': [
-                {'name': 'Input', 'code': 'Real/Fake img', 'desc': 'Image'},
-                {'name': 'Down', 'code': 'Conv2d stride=2', 'desc': 'Shrink'},
-                {'name': 'Output', 'code': 'Sigmoid() 0/1', 'desc': 'Real prob'},
-            ]},
-            {'name': 'Training', 'items': [
-                {'name': 'D Loss', 'code': 'BCE(D(x),1)+...', 'desc': 'Detect'},
-                {'name': 'G Loss', 'code': 'BCE(D(G(z)),1)', 'desc': 'Fool D'},
-                {'name': 'Alternate', 'code': 'Train D, G', 'desc': 'Each step'},
-            ]},
-        ]
-    },
-    '12_deployment': {
-        'title': 'Deployment',
-        'subtitle': 'TorchScript, ONNX, Quantization',
-        'color': '#F44336',
-        'sections': [
-            {'name': 'TorchScript', 'items': [
-                {'name': 'Trace', 'code': 'jit.trace(m,x)', 'desc': 'Record'},
-                {'name': 'Script', 'code': 'jit.script(m)', 'desc': 'Compile'},
-                {'name': 'Save', 'code': 'model.save()', 'desc': 'Export'},
-            ]},
-            {'name': 'ONNX', 'items': [
-                {'name': 'Export', 'code': 'onnx.export()', 'desc': 'Universal'},
-                {'name': 'Runtime', 'code': 'onnxruntime', 'desc': 'Fast'},
-                {'name': 'Optimize', 'code': 'simplifier', 'desc': 'Reduce'},
-            ]},
-            {'name': 'Quantize', 'items': [
-                {'name': 'Dynamic', 'code': 'quantize_dynamic', 'desc': 'Easy'},
-                {'name': 'Static', 'code': 'prepare+convert', 'desc': 'Accurate'},
-                {'name': 'QAT', 'code': 'Aware training', 'desc': 'Best'},
-            ]},
-        ]
-    },
-}
+# ============ TUTORIAL 8: RNN/LSTM ============
+def create_rnn_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'LSTM Cell Architecture', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # LSTM cell (center)
+    cell = FancyBboxPatch((3.5, 1.5), 5, 3.5, boxstyle="round,pad=0.05",
+                           facecolor='#1e293b', edgecolor='#3b82f6', linewidth=2)
+    ax.add_patch(cell)
+    
+    # Gates inside
+    draw_block(ax, 4.5, 4, 1.2, 0.7, 'Forget', 'sigmoid', '#ef4444')
+    draw_block(ax, 6, 4, 1.2, 0.7, 'Input', 'sigmoid', '#22c55e')
+    draw_block(ax, 7.5, 4, 1.2, 0.7, 'Output', 'sigmoid', '#3b82f6')
+    
+    # Cell state
+    draw_block(ax, 6, 2.8, 2, 0.7, 'Cell State', 'c_t', '#f59e0b')
+    
+    # Hidden state
+    draw_block(ax, 6, 1.8, 2, 0.7, 'Hidden', 'h_t', '#ec4899')
+    
+    # Inputs
+    draw_block(ax, 1.5, 3, 1.5, 0.8, 'x_t', 'input', '#64748b')
+    draw_block(ax, 1.5, 2, 1.5, 0.8, 'h_t-1', 'prev hidden', '#ec4899')
+    
+    # Output
+    draw_block(ax, 10.5, 3, 1.5, 0.8, 'h_t', 'output', '#ec4899')
+    draw_block(ax, 10.5, 2, 1.5, 0.8, 'c_t', 'cell', '#f59e0b')
+    
+    # Arrows
+    draw_arrow(ax, 2.25, 3, 3.5, 3, '#94a3b8')
+    draw_arrow(ax, 2.25, 2, 3.5, 2.5, '#94a3b8')
+    draw_arrow(ax, 8.5, 3, 9.75, 3, '#94a3b8')
+    draw_arrow(ax, 8.5, 2.5, 9.75, 2, '#94a3b8')
+    
+    # Formula
+    ax.text(6, 0.8, 'h_t = o_t * tanh(c_t)    c_t = f_t * c_t-1 + i_t * g_t', 
+            fontsize=9, fontfamily='monospace', color='#94a3b8', ha='center')
+    
+    plt.savefig('08_rnn_lstm/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 08_rnn_lstm/overview.png")
 
-# Generate all tutorial images
-for folder, info in tutorials.items():
-    os.makedirs(folder, exist_ok=True)
-    create_tutorial_image(
-        info['title'], 
-        info['subtitle'], 
-        info['sections'], 
-        f"{folder}/overview.png",
-        info['color']
-    )
+# ============ TUTORIAL 9: TRANSFORMERS ============
+def create_transformer_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Self-Attention Mechanism', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Input
+    draw_block(ax, 1.5, 3, 1.5, 1, 'Input\nX', color='#64748b')
+    
+    # Q, K, V projections
+    draw_block(ax, 4, 4.2, 1.2, 0.7, 'Query', 'X @ W_q', '#ef4444')
+    draw_block(ax, 4, 3, 1.2, 0.7, 'Key', 'X @ W_k', '#22c55e')
+    draw_block(ax, 4, 1.8, 1.2, 0.7, 'Value', 'X @ W_v', '#3b82f6')
+    
+    # Attention
+    draw_block(ax, 6.5, 3.5, 2, 1, 'Attention\nScore', 'softmax(QK/d)', '#f59e0b')
+    
+    # Output
+    draw_block(ax, 9, 3, 1.8, 1, 'Output', 'Score @ V', '#ec4899')
+    
+    # Arrows
+    draw_arrow(ax, 2.25, 3.3, 3.4, 4.2, '#94a3b8')
+    draw_arrow(ax, 2.25, 3, 3.4, 3, '#94a3b8')
+    draw_arrow(ax, 2.25, 2.7, 3.4, 1.8, '#94a3b8')
+    
+    draw_arrow(ax, 4.6, 4.2, 5.5, 3.8, '#ef4444')
+    draw_arrow(ax, 4.6, 3, 5.5, 3.3, '#22c55e')
+    
+    draw_arrow(ax, 7.5, 3.2, 8.1, 3, '#f59e0b')
+    draw_arrow(ax, 4.6, 1.8, 8.1, 2.7, '#3b82f6')
+    
+    # Multi-head annotation
+    ax.text(6, 1, 'Multi-Head: Concat(head_1, ..., head_h) @ W_o', fontsize=9,
+            fontfamily='monospace', color='#94a3b8', ha='center')
+    
+    # Formula
+    ax.text(6.5, 2.3, 'Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V', fontsize=8,
+            fontfamily='monospace', color='#f59e0b', ha='center')
+    
+    plt.savefig('09_transformers/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 09_transformers/overview.png")
 
-# Create banner
-fig, ax = plt.subplots(figsize=(12, 4))
-ax.set_xlim(0, 12)
-ax.set_ylim(0, 4)
-ax.axis('off')
-ax.set_facecolor('#0d1117')
-fig.patch.set_facecolor('#0d1117')
+# ============ TUTORIAL 10: TRANSFER LEARNING ============
+def create_transfer_learning_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Transfer Learning Pipeline', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Pretrained model
+    draw_block(ax, 2, 4, 2.5, 1.2, 'Pretrained\nResNet/BERT', color='#3b82f6')
+    ax.text(2, 3.1, 'ImageNet/Wikipedia', fontsize=7, color='#94a3b8', ha='center')
+    
+    # Freeze backbone
+    backbone = FancyBboxPatch((4, 2.5), 3, 2.5, boxstyle="round,pad=0.03",
+                               facecolor='#1e293b', edgecolor='#22c55e', linewidth=2)
+    ax.add_patch(backbone)
+    ax.text(5.5, 4.5, 'Frozen Backbone', fontsize=9, color='#22c55e', ha='center')
+    ax.text(5.5, 3.8, 'requires_grad=False', fontsize=7, fontfamily='monospace', 
+            color='#22c55e', ha='center')
+    ax.text(5.5, 3, 'Feature\nExtractor', fontsize=10, color='white', ha='center')
+    
+    # New head
+    draw_block(ax, 8.5, 3.5, 2, 1, 'New Head', 'nn.Linear()', '#ec4899')
+    ax.text(8.5, 2.7, 'Your classes', fontsize=7, color='#94a3b8', ha='center')
+    
+    # Your data
+    draw_block(ax, 10.5, 1.5, 1.8, 1, 'Your\nDataset', color='#f59e0b')
+    
+    # Arrows
+    draw_arrow(ax, 3.25, 4, 4, 3.5, '#94a3b8')
+    draw_arrow(ax, 7, 3.5, 7.5, 3.5, '#94a3b8')
+    draw_arrow(ax, 10.5, 2, 10.5, 2.5, '#94a3b8')
+    draw_arrow_curved(ax, 10.5, 2.5, 8.5, 2.7, '#f59e0b', 'arc3,rad=-0.3')
+    
+    # Fine-tune settings
+    ax.text(6, 1, 'Fine-tune: lr=1e-5, epochs=5-10, small dataset OK', fontsize=9,
+            fontfamily='monospace', color='#94a3b8', ha='center')
+    
+    plt.savefig('10_transfer_learning/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 10_transfer_learning/overview.png")
 
-# Background
-bg = FancyBboxPatch((0.1, 0.1), 11.8, 3.8,
-                     boxstyle="round,pad=0.02,rounding_size=0.3",
-                     facecolor='#161b22', edgecolor='#EE4C2C',
-                     linewidth=3)
-ax.add_patch(bg)
+# ============ TUTORIAL 11: GAN ============
+def create_gan_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'GAN Architecture', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # Noise
+    draw_block(ax, 1.5, 4, 1.5, 1, 'Noise z', 'N(0,1)', '#64748b')
+    
+    # Generator
+    gen = FancyBboxPatch((3.2, 3), 2.5, 2, boxstyle="round,pad=0.03",
+                          facecolor='#1e293b', edgecolor='#22c55e', linewidth=2)
+    ax.add_patch(gen)
+    ax.text(4.45, 4.5, 'Generator', fontsize=10, fontweight='bold', color='#22c55e', ha='center')
+    ax.text(4.45, 3.5, 'ConvT\nUpsample', fontsize=9, color='white', ha='center')
+    
+    # Fake image
+    draw_block(ax, 6.8, 4, 1.3, 1, 'Fake\nImage', color='#f59e0b')
+    
+    # Real image
+    draw_block(ax, 6.8, 2, 1.3, 1, 'Real\nImage', color='#3b82f6')
+    
+    # Discriminator
+    disc = FancyBboxPatch((8.3, 2), 2.5, 3, boxstyle="round,pad=0.03",
+                           facecolor='#1e293b', edgecolor='#ef4444', linewidth=2)
+    ax.add_patch(disc)
+    ax.text(9.55, 4.5, 'Discriminator', fontsize=10, fontweight='bold', color='#ef4444', ha='center')
+    ax.text(9.55, 3.2, 'Conv\nDownsample', fontsize=9, color='white', ha='center')
+    
+    # Output
+    draw_block(ax, 9.55, 1.2, 1.5, 0.6, 'Real/Fake', '0 or 1', '#ec4899')
+    
+    # Arrows
+    draw_arrow(ax, 2.25, 4, 3.2, 4, '#94a3b8')
+    draw_arrow(ax, 5.7, 4, 6.15, 4, '#22c55e')
+    draw_arrow(ax, 7.45, 4, 8.3, 3.8, '#f59e0b')
+    draw_arrow(ax, 7.45, 2, 8.3, 2.5, '#3b82f6')
+    draw_arrow(ax, 9.55, 2, 9.55, 1.5, '#94a3b8')
+    
+    # Loss annotations
+    ax.text(2, 1, 'G Loss: fool D (make D output 1 for fakes)', fontsize=8,
+            color='#22c55e', ha='left')
+    ax.text(2, 0.5, 'D Loss: detect fakes (output 1 for real, 0 for fake)', fontsize=8,
+            color='#ef4444', ha='left')
+    
+    plt.savefig('11_gan/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 11_gan/overview.png")
 
-# PyTorch logo area
-logo_box = FancyBboxPatch((0.4, 0.8), 2.2, 2.4,
+# ============ TUTORIAL 12: DEPLOYMENT ============
+def create_deployment_diagram():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 6)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    ax.text(6, 5.5, 'Model Deployment Pipeline', fontsize=16, fontweight='bold',
+            color='white', ha='center')
+    
+    # PyTorch model
+    draw_block(ax, 1.5, 3.5, 2, 1.2, 'PyTorch\nModel', color='#3b82f6')
+    ax.text(1.5, 2.6, 'model.pth', fontsize=7, color='#94a3b8', ha='center')
+    
+    # Export options
+    draw_block(ax, 4.5, 4.5, 2, 0.9, 'TorchScript', 'jit.trace()', '#22c55e')
+    draw_block(ax, 4.5, 3.2, 2, 0.9, 'ONNX', 'onnx.export()', '#f59e0b')
+    draw_block(ax, 4.5, 1.9, 2, 0.9, 'Quantize', 'INT8', '#ec4899')
+    
+    # Runtimes
+    draw_block(ax, 7.5, 4.5, 2, 0.9, 'LibTorch', 'C++', '#22c55e')
+    draw_block(ax, 7.5, 3.2, 2, 0.9, 'ONNX RT', 'Universal', '#f59e0b')
+    draw_block(ax, 7.5, 1.9, 2, 0.9, 'Mobile', 'Lite', '#ec4899')
+    
+    # Deployment targets
+    draw_block(ax, 10.5, 4.5, 1.8, 0.9, 'Server', color='#3b82f6')
+    draw_block(ax, 10.5, 3.2, 1.8, 0.9, 'Edge', color='#8b5cf6')
+    draw_block(ax, 10.5, 1.9, 1.8, 0.9, 'Mobile', color='#64748b')
+    
+    # Arrows
+    draw_arrow(ax, 2.5, 4, 3.5, 4.5, '#94a3b8')
+    draw_arrow(ax, 2.5, 3.5, 3.5, 3.2, '#94a3b8')
+    draw_arrow(ax, 2.5, 3, 3.5, 1.9, '#94a3b8')
+    
+    for y in [4.5, 3.2, 1.9]:
+        draw_arrow(ax, 5.5, y, 6.5, y, '#94a3b8')
+        draw_arrow(ax, 8.5, y, 9.6, y, '#94a3b8')
+    
+    # Speed annotation
+    ax.text(6, 0.8, 'Optimization: 2-4x faster inference, 75% smaller model', fontsize=9,
+            color='#94a3b8', ha='center')
+    
+    plt.savefig('12_deployment/overview.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: 12_deployment/overview.png")
+
+# ============ BANNER ============
+def create_banner():
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 4)
+    ax.axis('off')
+    ax.set_facecolor('#0f172a')
+    fig.patch.set_facecolor('#0f172a')
+    
+    # Background
+    bg = FancyBboxPatch((0.1, 0.1), 11.8, 3.8,
+                         boxstyle="round,pad=0.02,rounding_size=0.3",
+                         facecolor='#1e293b', edgecolor='#EE4C2C',
+                         linewidth=3)
+    ax.add_patch(bg)
+    
+    # PyTorch logo representation
+    logo = FancyBboxPatch((0.5, 1), 2, 2,
                            boxstyle="round,pad=0.02,rounding_size=0.2",
-                           facecolor='#EE4C2C', edgecolor='none', alpha=0.9)
-ax.add_patch(logo_box)
-ax.text(1.5, 2.0, 'Py', fontsize=32, fontweight='bold', color='white', ha='center', va='center')
-ax.text(1.5, 1.3, 'Torch', fontsize=14, fontweight='bold', color='white', ha='center', va='center')
+                           facecolor='#EE4C2C', edgecolor='none')
+    ax.add_patch(logo)
+    ax.text(1.5, 2.3, 'Py', fontsize=28, fontweight='bold', color='white', ha='center')
+    ax.text(1.5, 1.5, 'Torch', fontsize=12, fontweight='bold', color='white', ha='center')
+    
+    # Title
+    ax.text(6.5, 2.8, 'PyTorch: Zero to Advanced', fontsize=24, fontweight='bold',
+            color='white', ha='center')
+    ax.text(6.5, 2, 'Complete Deep Learning Tutorial', fontsize=12,
+            color='#94a3b8', ha='center')
+    
+    # Stats boxes
+    stats = [
+        (4, '12', 'Tutorials', '#22c55e'),
+        (6.5, 'GPU', 'Ready', '#f59e0b'),
+        (9, 'Colab', 'Notebooks', '#3b82f6'),
+    ]
+    for x, num, label, color in stats:
+        box = FancyBboxPatch((x - 0.8, 0.4), 1.6, 1,
+                              boxstyle="round,pad=0.02", facecolor='#0f172a',
+                              edgecolor=color, linewidth=1.5)
+        ax.add_patch(box)
+        ax.text(x, 1.05, num, fontsize=14, fontweight='bold', color=color, ha='center')
+        ax.text(x, 0.65, label, fontsize=8, color='#94a3b8', ha='center')
+    
+    plt.savefig('banner.png', bbox_inches='tight', facecolor='#0f172a')
+    plt.close()
+    print("Created: banner.png")
 
-# Main title
-ax.text(6.8, 2.8, 'PyTorch: Zero to Advanced', fontsize=26, fontweight='bold',
-        color='white', ha='center', va='center')
-ax.text(6.8, 2.1, 'Complete Deep Learning Tutorial Series', fontsize=13,
-        color='#8b949e', ha='center', va='center')
-
-# Stats
-stats = [
-    ('12', 'Tutorials'),
-    ('Colab', 'Ready'),
-    ('GPU', 'Support'),
-]
-for i, (num, label) in enumerate(stats):
-    x = 4.5 + i * 2.3
-    ax.text(x, 1.1, num, fontsize=16, fontweight='bold', 
-            color='#EE4C2C', ha='center', va='center')
-    ax.text(x, 0.6, label, fontsize=10, color='#8b949e', ha='center', va='center')
-
-plt.tight_layout(pad=0.3)
-plt.savefig('banner.png', bbox_inches='tight', facecolor='#0d1117', edgecolor='none')
-plt.close()
-print("Created: banner.png")
-
-print("\n✅ All images generated successfully!")
+# Generate all images
+if __name__ == '__main__':
+    os.makedirs('01_basics', exist_ok=True)
+    os.makedirs('02_tensors', exist_ok=True)
+    os.makedirs('03_autograd', exist_ok=True)
+    os.makedirs('04_neural_networks', exist_ok=True)
+    os.makedirs('05_data_loading', exist_ok=True)
+    os.makedirs('06_training_loop', exist_ok=True)
+    os.makedirs('07_cnn', exist_ok=True)
+    os.makedirs('08_rnn_lstm', exist_ok=True)
+    os.makedirs('09_transformers', exist_ok=True)
+    os.makedirs('10_transfer_learning', exist_ok=True)
+    os.makedirs('11_gan', exist_ok=True)
+    os.makedirs('12_deployment', exist_ok=True)
+    
+    create_basics_diagram()
+    create_tensors_diagram()
+    create_autograd_diagram()
+    create_nn_diagram()
+    create_data_loading_diagram()
+    create_training_loop_diagram()
+    create_cnn_diagram()
+    create_rnn_diagram()
+    create_transformer_diagram()
+    create_transfer_learning_diagram()
+    create_gan_diagram()
+    create_deployment_diagram()
+    create_banner()
+    
+    print("\n✅ All block diagram images generated!")
