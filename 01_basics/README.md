@@ -1,23 +1,24 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/01-PyTorch_Basics-4CAF50?style=for-the-badge" alt="Basics"/>
-  <img src="https://img.shields.io/badge/Level-Beginner-green?style=for-the-badge" alt="Level"/>
-  <img src="https://img.shields.io/badge/Time-15_min-blue?style=for-the-badge" alt="Time"/>
-</p>
-
 <h1 align="center">01. PyTorch Basics</h1>
 
 <p align="center">
-  <a href="../README.md">← Back</a> •
+  <img src="https://img.shields.io/badge/Level-Beginner-4CAF50?style=flat-square" alt="Level"/>
+  <img src="https://img.shields.io/badge/Time-15_min-blue?style=flat-square" alt="Time"/>
+</p>
+
+<p align="center">
+  <a href="../README.md">← Back</a> &nbsp;•&nbsp;
   <a href="../02_tensors/README.md">Next: Tensors →</a>
 </p>
 
 <p align="center">
   <a href="https://colab.research.google.com/github/gaurav-redhat/pytorch_tutorial/blob/main/01_basics/demo.ipynb">
-    <img src="https://img.shields.io/badge/▶_Open_in_Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Open In Colab"/>
+    <img src="https://img.shields.io/badge/▶_Open_in_Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab"/>
   </a>
 </p>
 
 ---
+
+## Overview
 
 <p align="center">
   <img src="overview.png" alt="Overview" width="100%"/>
@@ -25,18 +26,18 @@
 
 ---
 
-## 🎯 What You'll Learn
+## What You'll Learn
 
 | Topic | Description |
 |-------|-------------|
-| Installation | How to install PyTorch |
-| Import | Import PyTorch and check version |
-| GPU | Check if CUDA is available |
+| Installation | Install PyTorch (CPU/GPU) |
+| Import | Import and check version |
+| GPU Check | Verify CUDA availability |
 | First Tensor | Create your first tensor |
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 # CPU only
@@ -48,63 +49,50 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 ---
 
-## 🔥 Your First PyTorch Code
+## Your First Code
 
 ```python
 import torch
 
 # Check version
-print(f"PyTorch version: {torch.__version__}")
+print(f"PyTorch: {torch.__version__}")
 
-# Check GPU availability
-print(f"CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
+# Check GPU
+print(f"CUDA: {torch.cuda.is_available()}")
 
-# Create your first tensor
+# First tensor
 x = torch.tensor([1, 2, 3, 4, 5])
 print(f"Tensor: {x}")
 print(f"Shape: {x.shape}")
-print(f"Data type: {x.dtype}")
+print(f"Dtype: {x.dtype}")
 ```
 
 ---
 
-## 💡 Key Concepts
+## Key Concepts
 
-### What is PyTorch?
-- Deep learning framework by Facebook/Meta
-- Dynamic computational graphs
-- Python-first design
-- Strong GPU acceleration
+**PyTorch** = Deep learning framework with dynamic graphs and GPU support
 
-### What is a Tensor?
-- Multi-dimensional array (like NumPy)
-- Can run on GPU
-- Supports automatic differentiation
-- The basic building block
+**Tensor** = Multi-dimensional array that runs on GPU and supports autograd
 
 ---
 
-## ✅ Checklist
+## Checklist
 
 - [ ] Install PyTorch
-- [ ] Import torch successfully
-- [ ] Check CUDA availability
-- [ ] Create a tensor
+- [ ] Import torch
+- [ ] Check CUDA
+- [ ] Create tensor
 
 ---
 
 <p align="center">
   <a href="https://colab.research.google.com/github/gaurav-redhat/pytorch_tutorial/blob/main/01_basics/demo.ipynb">
-    <img src="https://img.shields.io/badge/▶_Run_the_Code-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Open In Colab"/>
+    <img src="https://img.shields.io/badge/▶_Run_the_Code-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white" alt="Colab"/>
   </a>
 </p>
 
----
-
 <p align="center">
-  <a href="../README.md">← Back to Main</a> •
+  <a href="../README.md">← Back to Main</a> &nbsp;•&nbsp;
   <a href="../02_tensors/README.md">Next: Tensors →</a>
 </p>
-
