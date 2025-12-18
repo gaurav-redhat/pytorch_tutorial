@@ -164,3 +164,11 @@ x = x.cpu()
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../01_basics/README.md">← Prev: Basics</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../03_autograd/README.md">Next: Autograd →</a>
+</p>
+

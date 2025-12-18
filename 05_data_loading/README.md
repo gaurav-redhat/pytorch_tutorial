@@ -180,3 +180,11 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../04_neural_networks/README.md">← Prev: Neural Networks</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../06_training_loop/README.md">Next: Training Loop →</a>
+</p>
+

@@ -168,3 +168,11 @@ optimizer.step()
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../02_tensors/README.md">← Prev: Tensors</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../04_neural_networks/README.md">Next: Neural Networks →</a>
+</p>
+

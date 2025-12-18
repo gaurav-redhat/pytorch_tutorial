@@ -182,3 +182,11 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../06_training_loop/README.md">← Prev: Training Loop</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../08_rnn_lstm/README.md">Next: RNNs & LSTMs →</a>
+</p>
+

@@ -167,3 +167,11 @@ self.lstm = nn.LSTM(
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../07_cnn/README.md">← Prev: CNNs</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../09_transformers/README.md">Next: Transformers →</a>
+</p>
+

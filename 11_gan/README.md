@@ -189,3 +189,11 @@ for epoch in range(epochs):
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../10_transfer_learning/README.md">← Prev: Transfer Learning</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../12_deployment/README.md">Next: Deployment →</a>
+</p>
+

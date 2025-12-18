@@ -177,3 +177,11 @@ optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../05_data_loading/README.md">← Prev: Data Loading</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../07_cnn/README.md">Next: CNNs →</a>
+</p>
+

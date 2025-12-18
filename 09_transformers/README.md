@@ -182,3 +182,11 @@ encoder = nn.TransformerEncoder(encoder_layer, num_layers=6)
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../08_rnn_lstm/README.md">← Prev: RNNs & LSTMs</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../10_transfer_learning/README.md">Next: Transfer Learning →</a>
+</p>
+

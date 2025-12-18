@@ -101,3 +101,10 @@ print(f"Data type: {x.dtype}")
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../README.md">← Back to Main</a> •
+  <a href="../02_tensors/README.md">Next: Tensors →</a>
+</p>
+

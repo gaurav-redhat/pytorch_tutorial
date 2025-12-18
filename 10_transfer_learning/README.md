@@ -174,3 +174,11 @@ models.vit_b_16(weights='IMAGENET1K_V1')
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../09_transformers/README.md">← Prev: Transformers</a> •
+  <a href="../README.md">Back to Main</a> •
+  <a href="../11_gan/README.md">Next: GANs →</a>
+</p>
+

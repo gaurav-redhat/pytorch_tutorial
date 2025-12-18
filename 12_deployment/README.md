@@ -191,3 +191,14 @@ CMD ["python", "app.py"]
   </a>
 </p>
 
+---
+
+<p align="center">
+  <a href="../11_gan/README.md">← Prev: GANs</a> •
+  <a href="../README.md">Back to Main</a>
+</p>
+
+<p align="center">
+  <strong>🎉 Congratulations! You've completed the PyTorch Tutorial Series!</strong>
+</p>
+
